@@ -251,14 +251,26 @@ a{color:inherit;text-decoration:none;}
 .ep-card:active{transform:scale(.95);}
 .ep-card .thumb{
   position:absolute; inset:0;
+  overflow:hidden;
   background:
     radial-gradient(90% 70% at 30% 20%, rgba(229,9,20,.4), transparent 60%),
     linear-gradient(160deg, var(--thumb-a,#3a1a1c), var(--thumb-b,#151515));
 }
 .ep-card .thumb::after{
   content:'';
-  position:absolute; inset:0;
+  position:absolute; inset:0; z-index:1;
   background:linear-gradient(0deg, rgba(0,0,0,.85) 0%, rgba(0,0,0,.1) 55%, rgba(0,0,0,0) 70%);
+}
+.ep-card .thumb .thumb-preview{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  display:block;
+  object-fit:cover; object-position:center;
+  opacity:0; transition:opacity .25s var(--ease);
+  pointer-events:none; z-index:0; background:#000;
+}
+.ep-card .thumb .thumb-preview.active{
+  opacity:1;
 }
 .ep-card .n{
   position:absolute; top:9px; left:10px;
@@ -354,6 +366,191 @@ a{color:inherit;text-decoration:none;}
   50%{box-shadow:0 0 0 8px rgba(232,194,122,0);}
 }
 
+#intro-overlay{
+    position:fixed;
+    inset:0;
+    background:#101018;
+    z-index:9999;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    text-align:center;
+    color:#fff;
+}
+
+#intro-overlay > *{
+    z-index:2;
+}
+
+#intro-video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    opacity:0;
+    transition:opacity .7s ease;
+    pointer-events:none;
+}
+
+@media (max-width: 768px) {
+  #intro-video{
+    transform:rotate(90deg);
+    transform-origin:center center;
+    width:100vh;
+    height:auto;
+  }
+}
+
+#ready-question{
+    opacity:0;
+    transform:scale(.9);
+    transition:.7s;
+}
+
+#fire-final{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    opacity:1;
+    transition:.5s;
+}
+
+#fire-final.hidden{
+    display:none;
+}
+
+#fire-final img{
+    max-width:220px;
+    width:30%;
+    height:auto;
+}
+
+#fire-number{
+    font-size:64px;
+    color:white;
+    opacity:0;
+    transform:scale(.5);
+    transition:.5s;
+}
+
+#play-prompt{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  z-index:2;
+  width:100%;
+  padding:0 24px;
+}
+
+#play-prompt button{
+  width:92px;
+  height:92px;
+  border-radius:50%;
+  border:1px solid rgba(232,194,122,.4);
+  background:rgba(232,194,122,.13);
+  color:#fff;
+  font-size:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#play-prompt p{
+  color:#ddd;
+  font-size:16px;
+  max-width:380px;
+  line-height:1.5;
+}
+
+#skip-intro{
+  position:absolute;
+  top:24px;
+  right:24px;
+  z-index:2;
+  color:#fff;
+  background:rgba(255,255,255,.08);
+  padding:12px 18px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  font-size:14px;
+}
+
+#ready-question{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    color:#fff;
+    width:100%;
+    padding:0 24px;
+    opacity:1;
+    transform:scale(1);
+    transition:opacity .3s ease, transform .3s ease;
+}
+
+#ready-question.hidden{
+    display:none;
+    opacity:0;
+    transform:scale(.9);
+}
+
+#fire-final.hidden,
+#play-prompt.hidden{
+    display:none;
+}
+
+#ready-question h2{
+    font-size:42px;
+    line-height:1.05;
+    margin:0;
+}
+
+.ready-actions{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+}
+
+.start-btn{
+    padding:14px 24px;
+    min-width:110px;
+    border-radius:999px;
+    border:1px solid rgba(232,194,122,.35);
+    background:rgba(232,194,122,.14);
+    color:#fff;
+    font-size:15px;
+}
+
+#fire-final{
+    justify-content:center;
+    gap:18px;
+    color:#fff;
+    padding:0 20px;
+}
+
+#fire-final img{
+    max-width:260px;
+    width:35%;
+}
+
+#fire-number{
+    font-size:88px;
+    letter-spacing:.02em;
+}
+
+.hidden{
+    display:none;
+}
+
 /* ============================================================
    OVERLAY SEQUENCE
    ============================================================ */
@@ -365,67 +562,22 @@ a{color:inherit;text-decoration:none;}
 }
 .overlay.active{display:flex;}
 
-/* ---- Cat scene ---- */
-#catScene{flex-direction:column;}
-.cat-stage{
-  position:relative; width:100%; height:100%;
-  display:flex; align-items:flex-end; justify-content:center;
+.doodle-overlay{
+  position:fixed; inset:0; z-index:210;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(8,8,8,.55);
 }
-.cat-floor{
-  position:absolute; left:0; right:0; bottom:0; height:38%;
-  background:linear-gradient(0deg, #1a1414, transparent);
-}
-.cat-svg-wrap{
-  position:relative;
-  transform:translateX(-140vw);
-  animation:catWalk 2.4s var(--ease) forwards;
-  touch-action:none;
-}
-@keyframes catWalk{
-  0%{transform:translateX(-140vw);}
-  100%{transform:translateX(0);}
-}
-.cat-svg-wrap.arrived{animation:none; transform:translateX(0);}
-.cat-svg-wrap.petting .tail{animation-duration:.4s;}
-.speech-bubble{
-  position:absolute; top:-14px; left:50%; transform:translate(-50%,-100%) scale(.85);
-  background:#fff; color:#141414;
-  padding:10px 16px; border-radius:16px;
-  font-weight:700; font-size:14px; white-space:nowrap;
-  opacity:0; transition:opacity .5s var(--ease), transform .5s var(--ease);
-  pointer-events:none;
-}
-.speech-bubble::after{
-  content:''; position:absolute; bottom:-7px; left:50%; transform:translateX(-50%);
-  border-width:8px 7px 0 7px; border-style:solid; border-color:#fff transparent transparent transparent;
-}
-.speech-bubble.show{opacity:1; transform:translate(-50%,-100%) scale(1);}
-.cat-hint{
-  position:absolute; bottom:6%; left:0; right:0; text-align:center;
-  font-family:var(--mono); font-size:11px; color:var(--dimmer); letter-spacing:.5px;
-  opacity:0; transition:opacity .6s var(--ease) .3s;
-}
-.cat-hint.show{opacity:1;}
-.pet-progress{
-  position:absolute; top:8%; left:50%; transform:translateX(-50%);
-  width:140px; height:5px; background:rgba(255,255,255,.12); border-radius:6px; overflow:hidden;
-  opacity:0; transition:opacity .4s;
-}
-.pet-progress.show{opacity:1;}
-.pet-progress i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--gold),var(--red)); transition:width .15s var(--ease);}
-.heart{
-  position:absolute; font-size:20px; pointer-events:none;
-  animation:floatHeart 1.6s ease-out forwards;
-  z-index:5;
-}
-@keyframes floatHeart{
-  0%{opacity:1; transform:translateY(0) scale(.6) rotate(0deg);}
-  100%{opacity:0; transform:translateY(-140px) scale(1.2) rotate(20deg);}
-}
-.overlay-skip{
-  position:absolute; top:20px; right:18px; z-index:10;
-  font-family:var(--mono); font-size:11px; color:var(--dimmer);
-  padding:8px 14px; border:1px solid rgba(255,255,255,.15); border-radius:100px;
+.doodle-message{
+  max-width:88%;
+  padding:20px 24px;
+  background:rgba(18,18,18,.96);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:28px;
+  text-align:center;
+  font-size:clamp(20px,4vw,32px);
+  line-height:1.15;
+  color:#fff;
+  box-shadow:0 26px 70px rgba(0,0,0,.35);
 }
 
 /* ---- Curtains ---- */
@@ -497,14 +649,23 @@ a{color:inherit;text-decoration:none;}
   text-align:center; padding:0 30px; color:var(--dim);
   font-size:14px; line-height:1.7;
 }
-.ep-player-stage.force-landscape{overflow:hidden;}
-.ep-player-stage.force-landscape #epPlayerVideo{
-  position:absolute;
-  left:50%; top:50%;
+.ep-player.force-landscape{
+  inset:50% auto auto 50%;
+  width:100vh;
+  height:100vw;
   transform:translate(-50%,-50%) rotate(90deg);
-  width:100vh; /* match viewport height to fill rotated layout */
-  height:auto;
+  transform-origin:center center;
+  padding:0;
+}
+.ep-player.force-landscape .ep-player-stage{
+  width:100%; height:100%;
   max-width:none; max-height:none;
+}
+.ep-player.force-landscape #epPlayerVideo{
+  width:100%; height:100%;
+  max-width:none; max-height:none;
+  object-fit:contain;
+  border-radius:0;
 }
 .ep-player-empty div{font-size:40px; margin-bottom:14px;}
 .ep-player-empty code{color:var(--gold); font-family:var(--mono); font-size:12px;}
@@ -553,6 +714,14 @@ a{color:inherit;text-decoration:none;}
   transition:transform .25s ease, background .25s ease, border-color .25s ease;
 }
 .ep-player-btn:hover{transform:scale(1.03); background:rgba(255,255,255,.08);}
+.ep-player-btn:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+  transform:none;
+  background:rgba(255,255,255,.06);
+  border-color:rgba(255,255,255,.12);
+}
+.ep-player-btn:disabled:hover{transform:none; background:rgba(255,255,255,.06);}
 .ep-player-play{width:72px; height:72px; font-size:28px;}
 .ep-player-progress-wrap{
   display:flex; flex-direction:column; gap:10px;
@@ -637,6 +806,30 @@ a{color:inherit;text-decoration:none;}
   background:linear-gradient(180deg, rgba(9,9,9,.9) 0%, rgba(9,9,9,.55) 55%, transparent 100%);
   pointer-events:none;
 }
+.room-back-btn{
+  position:absolute;
+  top:calc(18px + env(safe-area-inset-top, 0px));
+  left:18px;
+  z-index:3;
+  padding:12px 16px;
+  border-radius:999px;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18);
+  color:#fff;
+  font-size:14px;
+  backdrop-filter:blur(12px);
+  cursor:pointer;
+  transition:transform .2s ease, background .2s ease, border-color .2s ease;
+  pointer-events:auto;
+}
+.room-back-btn:hover{
+  transform:scale(1.03);
+  background:rgba(255,255,255,.16);
+  border-color:rgba(255,255,255,.28);
+}
+.room-back-btn:active{
+  transform:scale(.97);
+}
 .room-title{
   font-family:var(--display); font-size:26px; text-align:center;
   color:var(--gold); letter-spacing:.5px;
@@ -671,6 +864,33 @@ a{color:inherit;text-decoration:none;}
 </head>
 <body>
 
+<div id="intro-overlay">
+  <div id="play-prompt">
+    <button id="start-video-btn" type="button">▶</button>
+    <p>Нажми, чтобы начать трейлер</p>
+  </div>
+
+  <video id="intro-video" playsinline preload="metadata">
+    <source src="https://aspazmaster.com/uploads/adimi/videos/trailer.mp4" type="video/mp4">
+    Твой браузер не поддерживает видео.
+  </video>
+
+  <button id="skip-intro" type="button">Скипнуть</button>
+
+  <div id="ready-question" class="hidden">
+    <h2>Готова?</h2>
+    <div class="ready-actions">
+      <button class="start-btn" type="button">Да</button>
+      <button class="start-btn" type="button">Yes</button>
+    </div>
+  </div>
+
+  <div id="fire-final" class="hidden">
+    <img src="https://aspazmaster.com/uploads/adimi/videos/fire.gif" alt="fire">
+    <span id="fire-number">17</span>
+  </div>
+</div>
+
 <nav class="topnav" id="topnav">
   <div class="brand">
     <img class="logo" src="HEKUARTS.png" alt="author Erasyl"></div>
@@ -678,7 +898,7 @@ a{color:inherit;text-decoration:none;}
 
 <header class="hero">
   <div class="hero-bg">
-    <video id="heroBgVideo" autoplay muted loop playsinline preload="auto" src="videos/intro_hero.mp4"></video>
+    <video id="heroBgVideo" muted loop playsinline preload="metadata" src="https://aspazmaster.com/uploads/adimi/videos/intro_hero.mp4"></video>
     <div class="grain"></div>
   </div>
   <div class="hero-content">
@@ -694,7 +914,7 @@ a{color:inherit;text-decoration:none;}
     </div>
     <div class="hero-actions">
       <button class="btn btn-primary" id="watchBtn"><span>▶</span> Смотреть</button>
-      <button class="btn btn-ghost" id="infoBtn"><span style="color:#f70000">ℹ</span> Подробнее</button>
+      <button class="btn btn-ghost" id="infoBtn">Открыть интерактив</button>
     </div>
   </div>
 </header>
@@ -708,7 +928,6 @@ a{color:inherit;text-decoration:none;}
     </div>
     <div class="row-head">
       <span class="row-title">Поздравления</span>
-      <span class="row-sub" id="epCounter">0 / 3 просмотрено</span>
     </div>
     <div class="row-scroll" id="episodeRow"></div>
   </section>
@@ -717,53 +936,6 @@ a{color:inherit;text-decoration:none;}
     <button class="secret-btn" id="secretBtn">✦ продолжить историю</button>
   </div>
 </main>
-
-<!-- ============ CAT SCENE ============ -->
-<div class="overlay" id="catScene">
-  <button class="overlay-skip" id="skipCat">пропустить</button>
-  <div class="cat-stage">
-    <div class="cat-floor"></div>
-    <div class="pet-progress" id="petProgress"><i id="petProgressBar"></i></div>
-    <div class="cat-svg-wrap" id="catWrap">
-      <div class="speech-bubble" id="speechBubble">Погладь меня 🐱</div>
-      <svg id="catSvg" width="220" height="180" viewBox="0 0 220 180">
-        <ellipse cx="110" cy="168" rx="70" ry="8" fill="#000" opacity="0.35"/>
-        <!-- tail -->
-        <path class="tail" d="M175,120 C210,110 215,70 190,55" stroke="#cabfae" stroke-width="16" fill="none" stroke-linecap="round" style="transform-origin:175px 120px; animation:tailWag 1.6s ease-in-out infinite;"/>
-        <!-- body -->
-        <ellipse cx="110" cy="120" rx="62" ry="42" fill="#d9cdb8"/>
-        <ellipse cx="110" cy="128" rx="46" ry="24" fill="#efe6d6"/>
-        <!-- legs -->
-        <rect x="70" y="150" width="14" height="22" rx="6" fill="#cabfae"/>
-        <rect x="140" y="150" width="14" height="22" rx="6" fill="#cabfae"/>
-        <!-- head -->
-        <g id="catHead" style="transform-origin:110px 78px;">
-          <ellipse cx="110" cy="78" rx="46" ry="38" fill="#d9cdb8"/>
-          <!-- Scottish fold ears (small, folded) -->
-          <path d="M78,52 Q72,32 90,38 Q84,52 78,52 Z" fill="#cabfae"/>
-          <path d="M142,52 Q148,32 130,38 Q136,52 142,52 Z" fill="#cabfae"/>
-          <!-- face patch -->
-          <ellipse cx="110" cy="92" rx="26" ry="18" fill="#f2ebdd"/>
-          <!-- eyes -->
-          <ellipse id="eyeL" cx="94" cy="76" rx="5.5" ry="7" fill="#2b2320"/>
-          <ellipse id="eyeR" cx="126" cy="76" rx="5.5" ry="7" fill="#2b2320"/>
-          <ellipse cx="96" cy="73" rx="1.6" ry="2" fill="#fff"/>
-          <ellipse cx="128" cy="73" rx="1.6" ry="2" fill="#fff"/>
-          <!-- nose -->
-          <path d="M105,90 L115,90 L110,96 Z" fill="#e2909c"/>
-          <!-- mouth (neutral, becomes smile via class) -->
-          <path id="mouth" d="M110,96 Q110,100 104,101 M110,96 Q110,100 116,101" stroke="#8a7c6b" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          <!-- whiskers -->
-          <path d="M70,88 L40,84 M70,94 L40,96 M150,88 L180,84 M150,94 L180,96" stroke="#c9bda9" stroke-width="1.4" stroke-linecap="round"/>
-          <!-- blush (hidden until purring) -->
-          <ellipse id="blushL" class="blush" cx="80" cy="90" rx="8" ry="5" fill="#e79aa6" opacity="0"/>
-          <ellipse id="blushR" class="blush" cx="140" cy="90" rx="8" ry="5" fill="#e79aa6" opacity="0"/>
-        </g>
-      </svg>
-    </div>
-    <div class="cat-hint" id="catHint">нежно погладь котика пальцем</div>
-  </div>
-</div>
 
 <!-- ============ CURTAIN SCENE ============ -->
 <div class="overlay" id="curtainScene">
@@ -813,10 +985,11 @@ a{color:inherit;text-decoration:none;}
         </div>
       </div>
       <!-- volume controls removed (handled via device/system) -->
-      <div class="ep-player-endcard" id="epPlayerEndcard" aria-hidden="true">
-        <div class="ep-player-endcard-copy" id="epEndCopy"></div>
-        <button class="btn btn-primary" id="epEndActionBtn">▶ Смотреть сейчас</button>
-      </div>
+    </div>
+    <div class="ep-player-endcard" id="epPlayerEndcard" aria-hidden="true">
+      <div class="ep-player-endcard-copy" id="epEndCopy"></div>
+      <button class="btn btn-primary" id="epEndActionBtn">▶ Смотреть сейчас</button>
+      <button class="btn btn-ghost" id="epEndCloseBtn">Закрыть плеер</button>
     </div>
   </div>
   <button class="ep-player-close" id="epPlayerClose" aria-label="Закрыть">✕</button>
@@ -825,6 +998,7 @@ a{color:inherit;text-decoration:none;}
 <!-- ============ ROOM SCENE — интерактивная 2D-полка ============ -->
 <div class="overlay" id="roomScene">
   <div class="room-shelf-frame">
+    <button class="room-back-btn" id="roomBackBtn" type="button">← Назад</button>
     <div class="room-shelf-header">
       <div class="room-title">Комната воспоминаний</div>
       <p class="room-sub">Двигай пальцем, приближай двумя пальцами и нажимай на предметы ✨</p>
@@ -855,9 +1029,13 @@ const CONFIG = {
   //    Оставь '' — покажется заглушка, а плитка всё равно отметится просмотренной.
   //    Плеер сам подстроится под пропорции видео (портрет/альбом).
   episodes: [
-    { n:'E1', title:'Поздравление №1',        who:'❤️',            a:'#3a1a1c', b:'#1a1414', src:'greetings/kamila_greeting.mp4' },
-    { n:'E2', title:'Поздравление №2',        who:'❤️',            a:'#1c2a3a', b:'#141a1f', src:'greetings/kamila_greeting.mp4' },
-    { n:'E3', title:'Поздравление Сары',      who:'Сара',          a:'#2a1c3a', b:'#171420', src:'greetings/kamila_greeting.mp4' },
+    { n:'E1', title:'Поздравление от Камилы',   who:'Kamila',    a:'#3a2a1c', b:'#1f1412', src:'https://aspazmaster.com/uploads/adimi/greetings/kamila_greeting.mp4' },
+    { n:'E2', title:'Поздравление от Сары',   who:'Sarah',    a:'#3a2a1c', b:'#1f1412', src:'https://aspazmaster.com/uploads/adimi/videos/trailer.mp4' },
+    { n:'E3', title:'Поздравление от Айгерим',  who:'Aigerim',  a:'#3a1a1c', b:'#1a1414', src:'https://aspazmaster.com/uploads/adimi/greetings/aigerim_greeting.mp4' },
+    { n:'E4', title:'Поздравление от Аян',     who:'Ayan',      a:'#1c2a3a', b:'#141a1f', src:'https://aspazmaster.com/uploads/adimi/greetings/ayan_greeting.mp4' },
+    { n:'E5', title:'Поздравление от Аяулым',  who:'Ayaulym',   a:'#2a1c3a', b:'#171420', src:'https://aspazmaster.com/uploads/adimi/greetings/ayaulym_greeting.mp4' },
+    { n:'E6', title:'Поздравление от Замиры',   who:'Zamira',    a:'#2a3a1c', b:'#141a12', src:'https://aspazmaster.com/uploads/adimi/greetings/zamira_greeting.mp4' },
+    { n:'E7', title:'Поздравление от Дильназ',   who:'Dilnaz',    a:'#1c3a2a', b:'#14201a', src:'https://aspazmaster.com/uploads/adimi/greetings/dilnaz_greeting.mp4' },
   ],
 
   // 2) Real video for the big reveal. Leave empty to keep the
@@ -874,10 +1052,14 @@ function el(html){ const t=document.createElement('template'); t.innerHTML=html.
 
 const episodeRow = document.getElementById('episodeRow');
 let watchedCount = 0;
+let baseVideosStarted = false;
+
 CONFIG.episodes.forEach((e,i)=>{
   const card = el(`
     <div class="ep-card reveal in" style="--thumb-a:${e.a};--thumb-b:${e.b}" data-i="${i}">
-      <div class="thumb"></div>
+      <div class="thumb">
+        <video class="thumb-preview" playsinline webkit-playsinline muted loop preload="auto" aria-hidden="true"></video>
+      </div>
       <div class="n">${e.n}</div>
       <div class="check">✓</div>
       <div class="play">▶</div>
@@ -886,11 +1068,71 @@ CONFIG.episodes.forEach((e,i)=>{
         <div class="who">${e.who}</div>
       </div>
     </div>`);
+  attachEpisodePreview(e, card);
   card.addEventListener('click', ()=>{
     openEpisodePlayer(e, card);
   });
   episodeRow.appendChild(card);
 });
+
+function attachEpisodePreview(episode, card){
+  if(!episode?.src) return;
+  const thumb = card.querySelector('.thumb');
+  if(!thumb) return;
+
+  let preview = thumb.querySelector('.thumb-preview');
+  if(!preview){
+    preview = document.createElement('video');
+    preview.className = 'thumb-preview';
+    preview.playsInline = true;
+    preview.muted = true;
+    preview.loop = true;
+    preview.autoplay = false;
+    preview.preload = 'auto';
+    preview.setAttribute('playsinline', '');
+    preview.setAttribute('webkit-playsinline', '');
+    preview.setAttribute('muted', '');
+    preview.setAttribute('loop', '');
+    preview.setAttribute('aria-hidden', 'true');
+    thumb.appendChild(preview);
+  }
+
+  preview.src = episode.src;
+  preview.load();
+  preview.currentTime = 0;
+  preview.classList.add('active');
+  if(baseVideosStarted){
+    preview.play().catch(()=>{});
+  } else {
+    preview.pause();
+  }
+}
+
+function getPageVideos(){
+  const intro = document.getElementById('intro-video');
+  const ep = document.getElementById('epPlayerVideo');
+  const personal = document.getElementById('personalVideo');
+  return Array.from(document.querySelectorAll('video')).filter(v=> v !== intro && v !== ep && v !== personal);
+}
+
+function pauseBaseVideos(){
+  getPageVideos().forEach(v=>{
+    if(!v.paused) v.pause();
+  });
+}
+
+function resumeBaseVideos(){
+  baseVideosStarted = true;
+  const hero = document.getElementById('heroBgVideo');
+  if(hero){
+    hero.play().catch(()=>{});
+  }
+  document.querySelectorAll('.thumb-preview').forEach(v=>{
+    if(v.src){
+      v.play().catch(()=>{});
+    }
+  });
+}
 
 function markWatched(card){
   if(card.classList.contains('watched')) return;
@@ -900,15 +1142,42 @@ function markWatched(card){
 }
 
 function updateEpCounter(){
-  document.getElementById('epCounter').textContent = `${watchedCount} / ${CONFIG.episodes.length} просмотрено`;
   const secretBtn = document.getElementById('secretBtn');
   if(watchedCount >= CONFIG.episodes.length){
     secretBtn.classList.add('ready');
-    if(!secretBtn.dataset.autofired){
-      secretBtn.dataset.autofired = '1';
-      setTimeout(()=>startSequence(), 900);
-    }
   }
+}
+
+const DOODLE_TEXTS = ['Спасибо за просмотр', 'С днём рождения', 'Секрет откроется через секунду'];
+let doodleTimeout = null;
+let doodleIndex = 0;
+function showDoodleSequence(){
+  const overlay = document.createElement('div');
+  overlay.className = 'doodle-overlay active';
+  overlay.innerHTML = `<div class="doodle-message" id="doodleMessage">${DOODLE_TEXTS[0]}</div>`;
+  document.body.appendChild(overlay);
+  doodleIndex = 0;
+  function nextMessage(){
+    doodleIndex += 1;
+    if(doodleIndex >= DOODLE_TEXTS.length){
+      hideDoodle();
+      runCurtains();
+      return;
+    }
+    const message = document.getElementById('doodleMessage');
+    if(message) message.textContent = DOODLE_TEXTS[doodleIndex];
+    doodleTimeout = setTimeout(nextMessage, 3000);
+  }
+  doodleTimeout = setTimeout(nextMessage, 3000);
+}
+
+function hideDoodle(){
+  if(doodleTimeout){
+    clearTimeout(doodleTimeout);
+    doodleTimeout = null;
+  }
+  const overlay = document.querySelector('.doodle-overlay');
+  if(overlay) overlay.remove();
 }
 
 /* ============================================================
@@ -930,7 +1199,16 @@ document.getElementById('watchBtn').addEventListener('click', ()=>{
   document.getElementById('episodeRow').scrollIntoView({behavior:'smooth', block:'center'});
 });
 document.getElementById('infoBtn').addEventListener('click', ()=>{
-  document.querySelector('.hero-sub').scrollIntoView({behavior:'smooth', block:'center'});
+  document.body.style.overflow = 'hidden';
+  pauseBaseVideos();
+  showOverlay('roomScene');
+});
+document.getElementById('roomBackBtn').addEventListener('click', ()=>{
+  hideOverlay('roomScene');
+  document.body.style.overflow = '';
+  if(!epPlayer.classList.contains('active')){
+    resumeBaseVideos();
+  }
 });
 document.getElementById('secretBtn').addEventListener('click', startSequence);
 
@@ -942,84 +1220,8 @@ function hideOverlay(id){ document.getElementById(id).classList.remove('active')
 
 function startSequence(){
   document.body.style.overflow = 'hidden';
-  showOverlay('catScene');
-  initCatScene();
-}
-
-document.getElementById('skipCat').addEventListener('click', ()=>{
-  hideOverlay('catScene');
-  runCurtains();
-});
-
-/* ---- Cat interaction ---- */
-let petCount = 0;
-let catInited = false;
-function initCatScene(){
-  if(catInited) return;
-  catInited = true;
-  const wrap = document.getElementById('catWrap');
-  const bubble = document.getElementById('speechBubble');
-  const hint = document.getElementById('catHint');
-  const progressWrap = document.getElementById('petProgress');
-  const progressBar = document.getElementById('petProgressBar');
-  const catHead = document.getElementById('catHead');
-  const mouth = document.getElementById('mouth');
-  const blushL = document.getElementById('blushL');
-  const blushR = document.getElementById('blushR');
-
-  wrap.addEventListener('animationend', ()=>{
-    wrap.classList.add('arrived');
-    bubble.classList.add('show');
-    hint.classList.add('show');
-    progressWrap.classList.add('show');
-  }, {once:true});
-
-  let lastX = null;
-  function registerPet(){
-    petCount++;
-    progressBar.style.width = Math.min(100,(petCount/CONFIG.petsNeeded)*100)+'%';
-    catHead.style.transform = 'rotate(-3deg)';
-    setTimeout(()=>{ catHead.style.transform='rotate(2deg)'; },90);
-    setTimeout(()=>{ catHead.style.transform='rotate(0deg)'; },180);
-    if(petCount % 2 === 0) spawnHeart();
-    if(bubble.classList.contains('show')){ bubble.classList.remove('show'); }
-    if(petCount >= CONFIG.petsNeeded){
-      purrAndFinish();
-    }
-  }
-
-  function spawnHeart(){
-    const h = document.createElement('div');
-    h.className='heart';
-    h.textContent = ['💗','❤️','💕'][Math.floor(Math.random()*3)];
-    const rect = wrap.getBoundingClientRect();
-    h.style.left = (rect.left + rect.width*(0.3+Math.random()*0.4)) + 'px';
-    h.style.top = (rect.top + rect.height*0.25) + 'px';
-    document.getElementById('catScene').appendChild(h);
-    setTimeout(()=>h.remove(),1700);
-  }
-
-  function purrAndFinish(){
-    hint.textContent = 'мур-мур... 💛';
-    mouth.setAttribute('d','M110,96 Q110,101 100,99 M110,96 Q110,101 120,99');
-    blushL.style.transition = blushR.style.transition = 'opacity .5s';
-    blushL.style.opacity = 1; blushR.style.opacity = 1;
-    for(let i=0;i<5;i++) setTimeout(spawnHeart, i*180);
-    setTimeout(()=>{
-      hideOverlay('catScene');
-      runCurtains();
-    }, 1900);
-  }
-
-  wrap.addEventListener('pointerdown', (e)=>{ lastX=e.clientX; registerPet(); });
-  wrap.addEventListener('pointermove', (e)=>{
-    if(e.pressure===0 && e.pointerType==='mouse' && e.buttons===0) return;
-    if(lastX!==null && Math.abs(e.clientX-lastX) > 12){
-      lastX = e.clientX;
-      registerPet();
-    }
-  });
-  window.addEventListener('pointerup', ()=>{ lastX=null; });
+  pauseBaseVideos();
+  showDoodleSequence();
 }
 
 /* ---- Curtains ---- */
@@ -1039,7 +1241,7 @@ function runCurtains(){
     // fully closed — hold for a beat
     setTimeout(()=>{
       hideOverlay('curtainScene');
-      runVideo();
+      runRoom();
       // reset for potential replay
       setTimeout(()=>{
         left.classList.remove('closed');
@@ -1071,8 +1273,9 @@ function runVideo(){
 
 /* ---- Room ---- */
 function runRoom(){
+  pauseBaseVideos();
   showOverlay('roomScene');
-  document.body.style.overflow = '';
+  document.body.style.overflow = 'hidden';
 }
 
 /* ---- Adaptive episode player (портрет/альбом — под пропорции конкретного видео) ---- */
@@ -1093,6 +1296,7 @@ const epDuration = document.getElementById('epDuration');
 const epPlayerEndcard = document.getElementById('epPlayerEndcard');
 const epEndCopy = document.getElementById('epEndCopy');
 const epEndActionBtn = document.getElementById('epEndActionBtn');
+const heroBgVideo = document.getElementById('heroBgVideo');
 
 let currentEpCard = null;
 let currentEpisode = null;
@@ -1134,20 +1338,26 @@ function resetEndcard(){
 function showEndcard(){
   if(!currentEpisode) return;
   const hasNext = currentIndex < CONFIG.episodes.length - 1;
+  const isLast = !hasNext;
   let countdown = 5;
   epEndCopy.textContent = hasNext ? `Следующее поздравление через ${countdown}` : 'Последнее поздравление завершено';
-  epEndActionBtn.textContent = hasNext ? '▶ Смотреть сейчас' : '↻ Пересмотреть';
+  epEndActionBtn.textContent = hasNext ? '▶ Смотреть сейчас' : '↻ Пересмотреть с первого видео';
+  document.getElementById('epEndCloseBtn').style.display = isLast ? 'block' : 'none';
   epPlayerEndcard.classList.add('active');
   epPlayerEndcard.setAttribute('aria-hidden', 'false');
-  endCountdown = setInterval(()=>{
-    countdown--;
-    if(countdown > 0){
-      epEndCopy.textContent = `Следующее поздравление через ${countdown}`;
-    } else {
-      clearInterval(endCountdown);
-      epEndCopy.textContent = hasNext ? 'Следующее поздравление сейчас' : 'Последнее поздравление готово';
-    }
-  }, 1000);
+  clearInterval(endCountdown);
+  if(hasNext){
+    endCountdown = setInterval(()=>{
+      countdown--;
+      if(countdown > 0){
+        epEndCopy.textContent = `Следующее поздравление через ${countdown}`;
+      } else {
+        clearInterval(endCountdown);
+        epEndCopy.textContent = 'Следующее поздравление сейчас';
+        playAdjacentEpisode(1);
+      }
+    }, 1000);
+  }
 }
 
 function showControls(){
@@ -1171,10 +1381,20 @@ function setProgressFromPointer(clientX){
   }
 }
 
+function updateNavButtons(){
+  const isFirst = currentIndex <= 0;
+  const isLast = currentIndex >= CONFIG.episodes.length - 1;
+  epPrevBtn.disabled = isFirst;
+  epNextBtn.disabled = isLast;
+}
+
 function openEpisodePlayer(episode, card){
+  pauseBaseVideos();
   currentEpCard = card;
   currentEpisode = episode;
   currentIndex = Number(card.dataset.i);
+  markWatched(card);
+  attachEpisodePreview(episode, card);
   epPlayerStage.classList.remove('portrait', 'landscape', 'has-video');
   epPlayerVideo.pause();
   epPlayerVideo.removeAttribute('src');
@@ -1195,6 +1415,7 @@ function openEpisodePlayer(episode, card){
     epPlayerStage.classList.add('has-video');
     epPlayerVideo.play().catch(()=>{});
   }
+  updateNavButtons();
   showControls();
 }
 
@@ -1218,13 +1439,20 @@ function playAdjacentEpisode(direction){
 }
 
 function closeEpisodePlayer(){
-  epPlayer.classList.remove('active');
+  epPlayer.classList.remove('active', 'force-landscape');
   document.body.style.overflow = '';
+  epPrevBtn.disabled = true;
+  epNextBtn.disabled = true;
   epPlayerVideo.pause();
-  if(currentEpCard) markWatched(currentEpCard);
+  epPlayerVideo.style.width = '';
+  epPlayerVideo.style.height = '';
+  epPlayerVideo.style.objectFit = '';
   resetEndcard();
   currentEpCard = null;
   currentEpisode = null;
+  if(!document.getElementById('roomScene').classList.contains('active')){
+    resumeBaseVideos();
+  }
 }
 
 function handleEndAction(){
@@ -1232,53 +1460,46 @@ function handleEndAction(){
   if(hasNext){
     playAdjacentEpisode(1);
   } else if(currentEpisode){
-    openEpisodePlayer(currentEpisode, currentEpCard);
+    const firstCard = document.querySelector('.ep-card[data-i="0"]');
+    if(firstCard){
+      openEpisodePlayer(CONFIG.episodes[0], firstCard);
+    } else {
+      openEpisodePlayer(currentEpisode, currentEpCard);
+    }
   }
 }
 
 // Orientation and metadata
-epPlayerVideo.addEventListener('loadedmetadata', ()=>{
+function applyVideoOrientation(){
+  if(!epPlayerVideo.videoWidth || !epPlayerVideo.videoHeight) return;
+
   const isPortrait = epPlayerVideo.videoHeight > epPlayerVideo.videoWidth;
   epPlayerStage.classList.toggle('portrait', isPortrait);
   epPlayerStage.classList.toggle('landscape', !isPortrait);
   updateDuration();
   setPlayState();
 
-  // Mobile behavior: if the video is landscape but the device is held portrait,
-  // present the video in a rotated, full-screen-friendly layout.
   const isMobile = /Mobi|Android|iPhone|iPad/.test(navigator.userAgent) || window.matchMedia('(max-width:600px)').matches;
-  if(isMobile){
-    if(!isPortrait && window.innerHeight > window.innerWidth){
-      epPlayerStage.classList.add('force-landscape');
-      // make video width equal to viewport height so rotated video fills screen
-      epPlayerVideo.style.width = `${window.innerHeight}px`;
-      epPlayerVideo.style.height = 'auto';
-    } else {
-      epPlayerStage.classList.remove('force-landscape');
-      epPlayerVideo.style.width = '';
-      epPlayerVideo.style.height = '';
-    }
+  const shouldForceLandscape = isMobile && !isPortrait && window.innerHeight > window.innerWidth;
+
+  epPlayer.classList.toggle('force-landscape', shouldForceLandscape);
+
+  if(shouldForceLandscape){
+    epPlayerVideo.style.width = '100%';
+    epPlayerVideo.style.height = '100%';
+    epPlayerVideo.style.objectFit = 'contain';
   } else {
-    epPlayerStage.classList.remove('force-landscape');
     epPlayerVideo.style.width = '';
     epPlayerVideo.style.height = '';
+    epPlayerVideo.style.objectFit = '';
   }
-});
+}
+
+epPlayerVideo.addEventListener('loadedmetadata', applyVideoOrientation);
 
 window.addEventListener('resize', ()=>{
   if(!epPlayer.classList.contains('active')) return;
-  // Re-run similar logic on resize/orientation change
-  const isPortraitNow = epPlayerVideo.videoHeight > epPlayerVideo.videoWidth;
-  const isMobileNow = /Mobi|Android|iPhone|iPad/.test(navigator.userAgent) || window.matchMedia('(max-width:600px)').matches;
-  if(isMobileNow && !isPortraitNow && window.innerHeight > window.innerWidth){
-    epPlayerStage.classList.add('force-landscape');
-    epPlayerVideo.style.width = `${window.innerHeight}px`;
-    epPlayerVideo.style.height = 'auto';
-  } else {
-    epPlayerStage.classList.remove('force-landscape');
-    epPlayerVideo.style.width = '';
-    epPlayerVideo.style.height = '';
-  }
+  applyVideoOrientation();
 });
 
 epPlayerVideo.addEventListener('timeupdate', updateProgress);
@@ -1296,6 +1517,7 @@ epPlayPauseBtn.addEventListener('click', (e)=>{ e.stopPropagation(); togglePlay(
 epPrevBtn.addEventListener('click', (e)=>{ e.stopPropagation(); playAdjacentEpisode(-1); });
 epNextBtn.addEventListener('click', (e)=>{ e.stopPropagation(); playAdjacentEpisode(1); });
 epEndActionBtn.addEventListener('click', (e)=>{ e.stopPropagation(); handleEndAction(); });
+document.getElementById('epEndCloseBtn').addEventListener('click', (e)=>{ e.stopPropagation(); closeEpisodePlayer(); });
 
 epProgressLine.addEventListener('pointerdown', (e)=>{
   trackingProgress = true;
@@ -1311,6 +1533,65 @@ epProgressLine.addEventListener('pointerdown', (e)=>{
 document.getElementById('epPlayerClose').addEventListener('click', closeEpisodePlayer);
 epPlayer.addEventListener('click', (e)=>{
   if(e.target === epPlayer) closeEpisodePlayer();
+});
+
+const introOverlay = document.getElementById('intro-overlay');
+const introVideo = document.getElementById('intro-video');
+const startVideoBtn = document.getElementById('start-video-btn');
+const skipIntroBtn = document.getElementById('skip-intro');
+const readyQuestion = document.getElementById('ready-question');
+const fireFinal = document.getElementById('fire-final');
+const fireNumber = document.getElementById('fire-number');
+const playPrompt = document.getElementById('play-prompt');
+
+function hideIntroOverlay(){
+  introOverlay.style.transition = 'opacity .7s ease';
+  introOverlay.style.opacity = '0';
+  document.body.style.overflow = '';
+  setTimeout(()=>{
+    introOverlay.remove();
+    resumeBaseVideos();
+  }, 700);
+}
+
+function showReadyQuestion(){
+  playPrompt.classList.add('hidden');
+  readyQuestion.classList.remove('hidden');
+  fireFinal.classList.add('hidden');
+  introVideo.style.opacity = '0';
+}
+
+function showFireFinal(){
+  readyQuestion.classList.add('hidden');
+  fireFinal.classList.remove('hidden');
+  fireNumber.style.opacity = '0';
+  fireNumber.style.transform = 'scale(.5)';
+  setTimeout(()=>{
+    fireNumber.style.opacity = '1';
+    fireNumber.style.transform = 'scale(1)';
+  }, 120);
+  setTimeout(hideIntroOverlay, 2400);
+}
+
+startVideoBtn.addEventListener('click', ()=>{
+  playPrompt.classList.add('hidden');
+  readyQuestion.classList.add('hidden');
+  fireFinal.classList.add('hidden');
+  introVideo.style.opacity = '1';
+  introVideo.play().catch(()=>{});
+});
+
+skipIntroBtn.addEventListener('click', ()=>{
+  introVideo.pause();
+  showReadyQuestion();
+});
+
+introVideo.addEventListener('ended', ()=>{
+  showReadyQuestion();
+});
+
+readyQuestion.querySelectorAll('.start-btn').forEach((button)=>{
+  button.addEventListener('click', showFireFinal);
 });
 
 showControls();
