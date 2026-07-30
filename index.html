@@ -385,21 +385,23 @@ a{color:inherit;text-decoration:none;}
 
 #intro-video{
     position:absolute;
-    inset:0;
+    top:50%;
+    left:50%;
     width:100%;
     height:100%;
     object-fit:cover;
     opacity:0;
     transition:opacity .7s ease;
     pointer-events:none;
+    transform:translate(-50%, -50%);
 }
 
 @media (max-width: 768px) {
   #intro-video{
-    transform:rotate(90deg);
+    transform:translate(-50%, -50%) rotate(90deg);
     transform-origin:center center;
-    width:100vh;
-    height:auto;
+    width:auto;
+    height:100%;
   }
 }
 
@@ -729,18 +731,32 @@ a{color:inherit;text-decoration:none;}
   max-width:860px;
   margin:0 auto 18px;
   pointer-events:auto;
+  /* larger vertical hit area for easier scrubbing */
+  padding:14px 0 6px;
+  margin-bottom:8px;
+  touch-action:none;
 }
 .ep-player-progress-line{
   position:relative;
   height:10px;
   border-radius:999px;
   background:rgba(255,255,255,.12);
+  /* expand hit target without changing visual thickness */
+  cursor:pointer;
+  touch-action:none;
+}
+.ep-player-progress-line::before{
+  content:'';
+  position:absolute;
+  left:0; right:0;
+  top:-16px; bottom:-16px;
 }
 .ep-player-progress-filled{
   position:absolute; inset:0 0 0 0;
   width:0%; height:100%;
   border-radius:999px;
   background:linear-gradient(90deg, rgba(229,9,20,.9), rgba(232,194,122,.95));
+  pointer-events:none;
 }
 .ep-player-progress-handle{
   position:absolute; top:50%; left:0;
@@ -749,6 +765,8 @@ a{color:inherit;text-decoration:none;}
   border-radius:50%;
   background:#fff;
   box-shadow:0 12px 24px rgba(0,0,0,.28);
+  pointer-events:none;
+  will-change:left;
 }
 .ep-player-time{
   display:flex; justify-content:space-between;
@@ -1372,13 +1390,54 @@ function scheduleHideControls(){
   }, 2500);
 }
 
-function setProgressFromPointer(clientX){
+function pointerToProgress(clientX, clientY){
   const rect = epProgressLine.getBoundingClientRect();
-  const pct = Math.min(1, Math.max(0, (clientX - rect.left)/rect.width));
-  if(epPlayerVideo.duration){
-    epPlayerVideo.currentTime = pct * epPlayerVideo.duration;
-    updateProgress();
+  if(rect.width <= 0 && rect.height <= 0) return 0;
+
+  const forced = epPlayer.classList.contains('force-landscape');
+  let pct;
+  if(forced){
+    // rotate(90deg): local horizontal axis becomes vertical on screen.
+    // Local 0 (start) → top of AABB, local 1 (end) → bottom.
+    // If inverted on device: pct = 1 - (clientY - rect.top) / span
+    const span = rect.height || 1;
+    pct = (clientY - rect.top) / span;
+  } else {
+    const span = rect.width || 1;
+    pct = (clientX - rect.left) / span;
   }
+  return Math.min(1, Math.max(0, pct));
+}
+
+let scrubTargetTime = null;
+let scrubSeekRaf = null;
+
+function flushScrubSeek(){
+  scrubSeekRaf = null;
+  if(scrubTargetTime == null || !epPlayerVideo.duration) return;
+  try { epPlayerVideo.currentTime = scrubTargetTime; } catch(_){}
+}
+
+function setProgressFromPointer(clientX, clientY, {seek = true, immediate = false} = {}){
+  const pct = pointerToProgress(clientX, clientY);
+  // Instant visual feedback (don't wait for video seek / timeupdate)
+  epProgressFilled.style.width = `${pct * 100}%`;
+  epProgressHandle.style.left = `${pct * 100}%`;
+  if(epPlayerVideo.duration){
+    const t = pct * epPlayerVideo.duration;
+    epCurrentTime.textContent = formatTime(t);
+    if(seek){
+      scrubTargetTime = t;
+      if(immediate){
+        if(scrubSeekRaf){ cancelAnimationFrame(scrubSeekRaf); scrubSeekRaf = null; }
+        flushScrubSeek();
+      } else if(!scrubSeekRaf){
+        // Coalesce seeks to one per frame — kills lag without losing responsiveness
+        scrubSeekRaf = requestAnimationFrame(flushScrubSeek);
+      }
+    }
+  }
+  return pct;
 }
 
 function updateNavButtons(){
@@ -1455,6 +1514,7 @@ function closeEpisodePlayer(){
   }
 }
 
+
 function handleEndAction(){
   const hasNext = currentIndex < CONFIG.episodes.length - 1;
   if(hasNext){
@@ -1520,12 +1580,33 @@ epEndActionBtn.addEventListener('click', (e)=>{ e.stopPropagation(); handleEndAc
 document.getElementById('epEndCloseBtn').addEventListener('click', (e)=>{ e.stopPropagation(); closeEpisodePlayer(); });
 
 epProgressLine.addEventListener('pointerdown', (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
   trackingProgress = true;
-  setProgressFromPointer(e.clientX);
-  const onMove = (moveEvent)=> setProgressFromPointer(moveEvent.clientX);
-  const onUp = ()=>{ trackingProgress = false; document.removeEventListener('pointermove', onMove); document.removeEventListener('pointerup', onUp); };
-  document.addEventListener('pointermove', onMove);
-  document.addEventListener('pointerup', onUp, {once:true});
+  // Capture pointer so drag continues even if finger leaves the thin bar
+  try { epProgressLine.setPointerCapture(e.pointerId); } catch(_){}
+  setProgressFromPointer(e.clientX, e.clientY, {seek: true, immediate: true});
+  showControls();
+
+  const onMove = (moveEvent)=>{
+    moveEvent.preventDefault();
+    // Visual every move; seek coalesced to 1/frame to avoid lag
+    setProgressFromPointer(moveEvent.clientX, moveEvent.clientY, {seek: true});
+  };
+  const onUp = (upEvent)=>{
+    trackingProgress = false;
+    // Final precise seek on release
+    setProgressFromPointer(upEvent.clientX, upEvent.clientY, {seek: true, immediate: true});
+    scrubTargetTime = null;
+    try { epProgressLine.releasePointerCapture(upEvent.pointerId); } catch(_){}
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.removeEventListener('pointercancel', onUp);
+    scheduleHideControls();
+  };
+  document.addEventListener('pointermove', onMove, {passive: false});
+  document.addEventListener('pointerup', onUp);
+  document.addEventListener('pointercancel', onUp);
 });
 
 /* volume event handlers removed */
