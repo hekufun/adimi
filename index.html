@@ -383,25 +383,36 @@ a{color:inherit;text-decoration:none;}
     z-index:2;
 }
 
-#intro-video{
+.intro-video-wrap{
     position:absolute;
     top:50%;
     left:50%;
+    width:100%;
+    height:100%;
+    transform:translate(-50%, -50%);
+    pointer-events:none;
+    overflow:hidden;
+}
+#intro-video{
     width:100%;
     height:100%;
     object-fit:contain;
     opacity:0;
     transition:opacity .7s ease;
     pointer-events:none;
-    transform:translate(-50%, -50%);
+    display:block;
 }
 
 @media (max-width: 768px) {
-  #intro-video{
-    transform:translate(-50%, -50%) rotate(90deg);
-    transform-origin:center center;
+  .intro-video-wrap{
     width:100vh;
     height:100vw;
+    transform:translate(-50%, -50%) rotate(90deg);
+    transform-origin:center center;
+  }
+  #intro-video{
+    width:100%;
+    height:100%;
     object-fit:contain;
   }
 }
@@ -927,10 +938,12 @@ a{color:inherit;text-decoration:none;}
     <p>Нажми, чтобы начать трейлер</p>
   </div>
 
-  <video id="intro-video" playsinline preload="metadata">
-    <source src="https://aspazmaster.com/uploads/adimi/videos/trailer.mp4" type="video/mp4">
-    Твой браузер не поддерживает видео.
-  </video>
+  <div class="intro-video-wrap">
+    <video id="intro-video" playsinline preload="metadata">
+      <source src="https://aspazmaster.com/uploads/adimi/videos/trailer.mp4" type="video/mp4">
+      Твой браузер не поддерживает видео.
+    </video>
+  </div>
 
   <button id="skip-intro" type="button">Скипнуть</button>
 
