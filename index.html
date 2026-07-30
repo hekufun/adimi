@@ -387,9 +387,8 @@ a{color:inherit;text-decoration:none;}
     position:absolute;
     top:50%;
     left:50%;
-    width:100%;
     height:100%;
-    object-fit:cover;
+    width:auto;
     opacity:0;
     transition:opacity .7s ease;
     pointer-events:none;
@@ -398,8 +397,7 @@ a{color:inherit;text-decoration:none;}
 
 @media (max-width: 768px) {
   #intro-video{
-    transform:translate(-50%, -50%) rotate(90deg);
-    transform-origin:center center;
+    transform:translate(-50%, -50%);
     width:auto;
     height:100%;
   }
