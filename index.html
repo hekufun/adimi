@@ -927,6 +927,80 @@ a{color:inherit;text-decoration:none;}
   .scroll-arrow span{border-left-width:7px;border-right-width:7px;border-top-width:9px;}
 }
 
+
+/* ---------- Logo trigger ---------- */
+.logo-trigger{
+  display:block;
+  width:fit-content;
+  margin:0 auto 18px;
+  cursor:pointer;
+  position:relative;
+}
+.logo-trigger img{
+  display:block;
+  width:100%;
+  max-width:300px;
+  transition:transform .3s var(--ease), filter .3s ease;
+}
+.logo-trigger:hover img{
+  transform:scale(1.04);
+  filter:brightness(1.15) drop-shadow(0 0 12px rgba(232,194,122,.35));
+}
+
+/* ---------- Spidey overlay ---------- */
+.spidey-overlay{
+  position:fixed;
+  inset:0;
+  z-index:3000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(8,8,8,.92);
+  backdrop-filter:blur(8px);
+  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
+}
+.spidey-overlay.active{
+  display:flex;
+}
+.spidey-canvas-wrap{
+  position:relative;
+  width:100%;
+  height:100%;
+  max-width:min(90vw, 900px);
+  max-height:min(90vh, 900px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#spideyCanvas{
+  display:block;
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+}
+.spidey-close{
+  position:absolute;
+  top:calc(16px + env(safe-area-inset-top,0));
+  right:calc(16px + env(safe-area-inset-right,0));
+  z-index:3001;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;
+  font-size:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:background .2s;
+}
+.spidey-close:hover{
+  background:rgba(255,255,255,.22);
+}
+
 </style>
 <base target="_blank">
 </head>
@@ -994,7 +1068,7 @@ a{color:inherit;text-decoration:none;}
 <main class="rows">
   <section class="row-section reveal">
     <div class="row-description" style="padding: 0 10px; text-align:justify;">
-      <img src="adina_logo.png" alt="Адина" style="width:100%; max-width:300px; display:block; margin:0 auto 18px;">
+      <div class="logo-trigger" id="logoTrigger"><img src="adina_logo.png" alt="Адина"></div>
       Всё начинается как обычный сериал. Но чем дальше ты его смотришь, тем больше понимаешь, что он существует всего в одном экземпляре и был сделан специально для тебя. Здесь собраны поздравления, воспоминания и небольшие сюрпризы, которые мне хотелось оставить на память и подарить тебе в этот день.
       Надеюсь, этот небольшой проект сможет хоть немного поднять тебе настроение и подарить улыбку. Приятного просмотра! ❤️
     </div>
@@ -1731,6 +1805,151 @@ readyQuestion.querySelectorAll('.start-btn').forEach((button)=>{
 
 showControls();
 
+
+/* ============================================================
+   SPIDEY LOGO — WebGL green-screen overlay
+   ============================================================ */
+(function(){
+  const logoTrigger = document.getElementById('logoTrigger');
+  const overlay = document.getElementById('spideyOverlay');
+  const closeBtn = document.getElementById('spideyClose');
+  const canvas = document.getElementById('spideyCanvas');
+  const video = document.getElementById('spideyVideo');
+  if(!canvas || !video) return;
+
+  const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false, antialias: false });
+  if(!gl) return;
+
+  // Shaders
+  const vsSrc = `
+    attribute vec2 a_position;
+    attribute vec2 a_texCoord;
+    varying vec2 v_texCoord;
+    void main(){
+      gl_Position = vec4(a_position, 0.0, 1.0);
+      v_texCoord = a_texCoord;
+    }
+  `;
+  const fsSrc = `
+    precision mediump float;
+    varying vec2 v_texCoord;
+    uniform sampler2D u_video;
+    uniform vec3 u_keyColor;
+    uniform float u_threshold;
+    void main(){
+      vec4 color = texture2D(u_video, v_texCoord);
+      float diff = distance(color.rgb, u_keyColor);
+      float alpha = smoothstep(u_threshold, u_threshold + 0.12, diff);
+      gl_FragColor = vec4(color.rgb, alpha);
+    }
+  `;
+
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  // Buffers
+  const posLoc = gl.getAttribLocation(prog, 'a_position');
+  const tcLoc = gl.getAttribLocation(prog, 'a_texCoord');
+  const posBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,-1, 1,1, -1,1]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+  const tcBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, tcBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0,1, 1,1, 0,0, 1,1, 1,0, 0,0]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(tcLoc);
+  gl.vertexAttribPointer(tcLoc, 2, gl.FLOAT, false, 0, 0);
+
+  // Texture
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  // Uniforms
+  const keyLoc = gl.getUniformLocation(prog, 'u_keyColor');
+  const thrLoc = gl.getUniformLocation(prog, 'u_threshold');
+  gl.uniform3f(keyLoc, 0.0, 1.0, 0.0);
+  gl.uniform1f(thrLoc, 0.35);
+
+  let rafId = null;
+  let running = false;
+
+  function resizeCanvas(){
+    const wrap = canvas.parentElement;
+    const rect = wrap.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+
+  function render(){
+    if(!running) return;
+    if(video.readyState >= 2){
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+    }
+    gl.clearColor(0,0,0,0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    rafId = requestAnimationFrame(render);
+  }
+
+  function openOverlay(){
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    resizeCanvas();
+    video.currentTime = 0;
+    video.play().catch(()=>{});
+    running = true;
+    render();
+  }
+
+  function closeOverlay(){
+    running = false;
+    if(rafId) cancelAnimationFrame(rafId);
+    video.pause();
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  logoTrigger.addEventListener('click', openOverlay);
+  closeBtn.addEventListener('click', closeOverlay);
+  overlay.addEventListener('click', (e)=>{
+    if(e.target === overlay) closeOverlay();
+  });
+  video.addEventListener('ended', closeOverlay);
+  window.addEventListener('resize', ()=>{
+    if(overlay.classList.contains('active')) resizeCanvas();
+  });
+})();
+
 </script>
+
+<!-- ============ SPIDEY OVERLAY ============ -->
+<div class="spidey-overlay" id="spideyOverlay">
+  <button class="spidey-close" id="spideyClose" type="button" aria-label="Закрыть">✕</button>
+  <div class="spidey-canvas-wrap">
+    <canvas id="spideyCanvas"></canvas>
+  </div>
+  <video id="spideyVideo" playsinline muted crossorigin="anonymous" style="display:none;" src="https://aspazmaster.com/items/spiderman_flexing.mp4"></video>
+</div>
+
 </body>
 </html>
