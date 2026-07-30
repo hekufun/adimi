@@ -1003,6 +1003,7 @@ a{color:inherit;text-decoration:none;}
 
 </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -1809,7 +1810,7 @@ showControls();
 /* ============================================================
    SPIDEY LOGO — WebGL green-screen overlay
    ============================================================ */
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
   const logoTrigger = document.getElementById('logoTrigger');
   const overlay = document.getElementById('spideyOverlay');
   const closeBtn = document.getElementById('spideyClose');
@@ -1938,7 +1939,7 @@ showControls();
   window.addEventListener('resize', ()=>{
     if(overlay.classList.contains('active')) resizeCanvas();
   });
-})();
+});
 
 </script>
 
